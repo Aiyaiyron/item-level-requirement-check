@@ -2,6 +2,7 @@ package com.skilllevelchecker;
 
 import net.runelite.client.config.*;
 
+import javax.xml.crypto.dsig.keyinfo.KeyName;
 import java.awt.*;
 
 @ConfigGroup("example")
@@ -40,7 +41,7 @@ public interface SkillLevelCheckerConfig extends Config {
             keyName = "triangleCorner",
             name = "Triangle corner",
             description = "Which corner to place the triangle indicator",
-            position = 5,
+            position = 6,
             section = indicatorSection
     )
     default TriangleCorner triangleCorner()
@@ -81,5 +82,15 @@ public interface SkillLevelCheckerConfig extends Config {
     default int tooltipOpacityPercent()
     {
         return 80;
+    }
+    @ConfigItem(
+            keyName = "requirementsMetColor",
+            name = "Requirements Met Color",
+            description = "Color of the triangle when all requirements are met",
+            position = 5,
+            section =   indicatorSection
+    )
+    default Color requirementsMetColor()  {
+        return new Color(0, 255, 0); // default green
     }
 }

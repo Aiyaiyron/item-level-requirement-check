@@ -20,8 +20,7 @@ import java.util.List;
 
 @Singleton
 @Slf4j
-public class SkillLevelCheckerOverlay extends WidgetItemOverlay
-{
+public class SkillLevelCheckerOverlay extends WidgetItemOverlay {
     private final Client client;
     private final ItemManager itemManager;
     private final SkillLevelCheckerPlugin plugin;
@@ -37,8 +36,7 @@ public class SkillLevelCheckerOverlay extends WidgetItemOverlay
             ItemManager itemManager,
             SkillLevelCheckerPlugin plugin,
             SkillLevelCheckerConfig config
-    )
-    {
+    ) {
         this.client = client;
         this.itemManager = itemManager;
         this.plugin = plugin;
@@ -51,26 +49,21 @@ public class SkillLevelCheckerOverlay extends WidgetItemOverlay
     /**
      * Clamp the tooltip position to ensure the tooltip box stays within the canvas.
      */
-    private Point clampTooltipPosition(int x, int y, int boxWidth, int boxHeight)
-    {
+    private Point clampTooltipPosition(int x, int y, int boxWidth, int boxHeight) {
         int canvasWidth = client.getCanvasWidth();
         int canvasHeight = client.getCanvasHeight();
 
-        if (x + boxWidth > canvasWidth)
-        {
+        if (x + boxWidth > canvasWidth) {
             x = canvasWidth - boxWidth - 2;
         }
-        if (x < 0)
-        {
+        if (x < 0) {
             x = 2;
         }
 
-        if (y < 0)
-        {
+        if (y < 0) {
             y = 2;
         }
-        if (y + boxHeight > canvasHeight)
-        {
+        if (y + boxHeight > canvasHeight) {
             y = canvasHeight - boxHeight - 2;
         }
 
@@ -78,22 +71,18 @@ public class SkillLevelCheckerOverlay extends WidgetItemOverlay
     }
 
     @Override
-    public void renderItemOverlay(Graphics2D graphics, int itemId, WidgetItem item)
-    {
+    public void renderItemOverlay(Graphics2D graphics, int itemId, WidgetItem item) {
         net.runelite.api.Point mousePos = client.getMouseCanvasPosition();
-        if (mousePos == null)
-        {
+        if (mousePos == null) {
             return;
         }
         Point mouse = new Point(mousePos.getX(), mousePos.getY());
 
-        if (item.getWidget() == null)
-        {
+        if (item.getWidget() == null) {
             return;
         }
 
-        if (client.getWidget(320) != null || client.getWidget(1212) != null || client.getWidget(210) != null)
-        {
+        if (client.getWidget(320) != null || client.getWidget(1212) != null || client.getWidget(210) != null) {
             return; // Skip overlay if Skill Guide is open
         }
 
@@ -102,11 +91,9 @@ public class SkillLevelCheckerOverlay extends WidgetItemOverlay
         String itemName = Text.removeTags(itemManager.getItemComposition(lookupId).getName());
 
         List<Requirement> requirements = SkillLevelCheckerData.ITEM_REQUIREMENTS_BY_ID.get(lookupId);
-        if (requirements == null || requirements.isEmpty())
-        {
+        if (requirements == null || requirements.isEmpty()) {
             requirements = SkillLevelCheckerData.ITEM_REQUIREMENTS.get(itemName);
-            if (requirements == null || requirements.isEmpty())
-            {
+            if (requirements == null || requirements.isEmpty()) {
                 return;
             }
         }
@@ -117,31 +104,29 @@ public class SkillLevelCheckerOverlay extends WidgetItemOverlay
         List<String> lines = new ArrayList<>();
         List<Boolean> metStatus = new ArrayList<>();
 
-        for (Requirement req : requirements)
-        {
+        for (Requirement req : requirements) {
             boolean met = req.isMet(client);
-            if (!met)
-            {
+            if (!met) {
                 unmet = true;
-            }
-            else
-            {
+            } else {
                 metCount++;
             }
             lines.add(req.getMessage());
+//            lines.add("This is a test text");
             metStatus.add(met);
         }
         int totalCount = requirements.size();
 
-        // Only show icon if there are unmet requirements
-        if (!unmet)
-        {
-            return;
+
+        // Determine triangle color from config: no-reqs vs partial-reqs vs met-reqs
+        Color triangleColor;
+        if (metCount == totalCount) {
+            triangleColor = config.requirementsMetColor();
+        } else if (metCount > 0) {
+            triangleColor = config.partialRequirementsColor();
+        } else {
+            triangleColor = config.noRequirementsColor();
         }
-
-        // Determine triangle color from config: no-reqs vs partial-reqs
-        Color triangleColor = (metCount == 0) ? config.noRequirementsColor() : config.partialRequirementsColor();
-
         // Enable antialiasing for smoother shapes
         graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
@@ -155,24 +140,23 @@ public class SkillLevelCheckerOverlay extends WidgetItemOverlay
         int top = bounds.y + 1;
         int bottom = bounds.y + bounds.height - 1;
 
-        switch (corner)
-        {
+        switch (corner) {
             case TOP_LEFT:
-                xs = new int[] { left, left + s, left };
-                ys = new int[] { top,  top,      top + s };
+                xs = new int[]{left, left + s, left};
+                ys = new int[]{top, top, top + s};
                 break;
             case BOTTOM_LEFT:
-                xs = new int[] { left, left + s, left };
-                ys = new int[] { bottom, bottom, bottom - s };
+                xs = new int[]{left, left + s, left};
+                ys = new int[]{bottom, bottom, bottom - s};
                 break;
             case BOTTOM_RIGHT:
-                xs = new int[] { right, right - s, right };
-                ys = new int[] { bottom, bottom,   bottom - s };
+                xs = new int[]{right, right - s, right};
+                ys = new int[]{bottom, bottom, bottom - s};
                 break;
             case TOP_RIGHT:
             default:
-                xs = new int[] { right, right - s, right };
-                ys = new int[] { top,   top,       top + s };
+                xs = new int[]{right, right - s, right};
+                ys = new int[]{top, top, top + s};
         }
 
         // Fill triangle (opaque)
@@ -183,25 +167,22 @@ public class SkillLevelCheckerOverlay extends WidgetItemOverlay
         graphics.setColor(OUTLINE_BLACK);
         graphics.drawPolygon(xs, ys, 3);
 
-        if (item.getCanvasBounds().contains(mouse))
-        {
+        if (item.getCanvasBounds().contains(mouse)) {
             plugin.getTooltipOverlay().renderItemOverlay(item, mouse, lines, metStatus);
             plugin.markTooltipSetThisFrame();
             plugin.updateHoveredItem(item);
         }
 
     }
+
     @Subscribe
-    public void onBeforeRender(BeforeRender event)
-    {
+    public void onBeforeRender(BeforeRender event) {
         plugin.resetTooltipFlag();
     }
 
     @Subscribe
-    public void onClientTick(ClientTick event)
-    {
-        if (!plugin.wasTooltipSetThisFrame())
-        {
+    public void onClientTick(ClientTick event) {
+        if (!plugin.wasTooltipSetThisFrame()) {
             plugin.getTooltipOverlay().clearHoveredTooltip();
         }
     }
